@@ -1,9 +1,12 @@
 from sqlmodel import Field, SQLModel, Relationship, create_engine, Session
+from typing import Annotated
+from fastapi import Depends
 
 class Clients(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(index=True)
     email: str = Field(index=True)
+    projects: list["Projects"] = Relationship(back_populates="client")
 
 class Projects(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -20,6 +23,9 @@ def get_session():
     with Session(engine) as session:
         yield session
 
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
 def seed_database(session: Session):
     client = Clients(name="John Doe", email="john.doe@example.com")
     session.add(client)
@@ -30,3 +36,5 @@ def seed_database(session: Session):
     project = Projects(name="Project 1", client_id=client.id)
     session.add(project)
     session.commit()
+
+SessionDep = Annotated[Session, Depends(get_session)]
