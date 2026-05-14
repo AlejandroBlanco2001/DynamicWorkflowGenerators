@@ -15,6 +15,7 @@ dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "google-adk" },
     { name = "litellm" },
+    { name = "temporalio" },
 ]
 
 [package.metadata]
@@ -22,6 +23,7 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.136.1" },
     { name = "google-adk", specifier = ">=1.33.0" },
     { name = "litellm", specifier = ">=1.83.14" },
+    { name = "temporalio", specifier = ">=1.27.1" },
 ]
 
 [[package]]
@@ -2043,6 +2045,18 @@ wheels = [
 ]
 
 [[package]]
+name = "nexus-rpc"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/35/d5/cd1ffb202b76ebc1b33c1332a3416e55a39929006982adc2b1eb069aaa9b/nexus_rpc-1.4.0.tar.gz", hash = "sha256:3b8b373d4865671789cc43623e3dc0bcbf192562e40e13727e17f1c149050fba", size = 82367, upload-time = "2026-02-25T22:01:34.053Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/11/52/6327a5f4fda01207205038a106a99848a41c83e933cd23ea2cab3d2ebc6c/nexus_rpc-1.4.0-py3-none-any.whl", hash = "sha256:14c953d3519113f8ccec533a9efdb6b10c28afef75d11cdd6d422640c40b3a49", size = 29645, upload-time = "2026-02-25T22:01:33.122Z" },
+]
+
+[[package]]
 name = "openai"
 version = "2.24.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3090,6 +3104,25 @@ wheels = [
 ]
 
 [[package]]
+name = "temporalio"
+version = "1.27.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "nexus-rpc" },
+    { name = "protobuf" },
+    { name = "types-protobuf" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fd/60/7e9df1bc4c93deab4b47a90fb39da82cd73df19b48c2b4b8f6b4c19062d4/temporalio-1.27.1.tar.gz", hash = "sha256:3ce9667a8c7d811d2b5094dbd42a843d8f821f334a4472bcacda34e7656bd59d", size = 2503076, upload-time = "2026-05-13T16:20:42.36Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/db/16/ad4b5c159a98403afca5088847d105c458b885091b3b60ef7d4c079ec519/temporalio-1.27.1-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:7ea4ed1e6c0b627f6f80579cc5f0918103b83b3a6867caa9df404bd8f852ace7", size = 14600501, upload-time = "2026-05-13T16:20:29.386Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/1d/37b15cd063bd1a7f263f1306678bc6aa20d21e7e2102e2a5c07646b43538/temporalio-1.27.1-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:f7ab3ce01b9fc94df484594e95ab0ea9b80f23caef90358b264432e34bf1ac22", size = 13999213, upload-time = "2026-05-13T16:20:38.712Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/0c/319cb6b02b8081052c02aace86dbae58699725f968cd9f9669dcd6a59368/temporalio-1.27.1-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4b97f80e96f817dd48a7d325b0865e9960f290fe13c1df69bb8493bf69a5cceb", size = 14251284, upload-time = "2026-05-13T16:21:00.102Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/cf/98e9cbd239689a674e589fbcca518345fe8511b24ad684d51e4ca443be45/temporalio-1.27.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:09ef5420099842d7a89ee592418b01133cfce80fa8bb36593a6320c0cb6c815b", size = 14780480, upload-time = "2026-05-13T16:21:09.029Z" },
+    { url = "https://files.pythonhosted.org/packages/20/e6/a147fad980d0f92b7b070d4fe439310b91375592c26d8cb6dc5d1a1c0ae4/temporalio-1.27.1-cp310-abi3-win_amd64.whl", hash = "sha256:a3afaed09643cfb24ac04837144ff37a02a0eac7eeeb1876065066806aeda512", size = 14979491, upload-time = "2026-05-13T16:20:50.622Z" },
+]
+
+[[package]]
 name = "tenacity"
 version = "9.1.4"
 source = { registry = "https://pypi.org/simple" }
@@ -3196,6 +3229,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fd/07/b822e1b307d40e263e8253d2384cf98c51aa2368cc7ba9a07e523a1d964b/typer-0.23.1.tar.gz", hash = "sha256:2070374e4d31c83e7b61362fd859aa683576432fd5b026b060ad6b4cd3b86134", size = 120047, upload-time = "2026-02-13T10:04:30.984Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d5/91/9b286ab899c008c2cb05e8be99814807e7fbbd33f0c0c960470826e5ac82/typer-0.23.1-py3-none-any.whl", hash = "sha256:3291ad0d3c701cbf522012faccfbb29352ff16ad262db2139e6b01f15781f14e", size = 56813, upload-time = "2026-02-13T10:04:32.008Z" },
+]
+
+[[package]]
+name = "types-protobuf"
+version = "6.32.1.20260221"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/e2/9aa4a3b2469508bd7b4e2ae11cbedaf419222a09a1b94daffcd5efca4023/types_protobuf-6.32.1.20260221.tar.gz", hash = "sha256:6d5fb060a616bfb076cbb61b4b3c3969f5fc8bec5810f9a2f7e648ee5cbcbf6e", size = 64408, upload-time = "2026-02-21T03:55:13.916Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2e/e8/1fd38926f9cf031188fbc5a96694203ea6f24b0e34bd64a225ec6f6291ba/types_protobuf-6.32.1.20260221-py3-none-any.whl", hash = "sha256:da7cdd947975964a93c30bfbcc2c6841ee646b318d3816b033adc2c4eb6448e4", size = 77956, upload-time = "2026-02-21T03:55:12.894Z" },
 ]
 
 [[package]]
