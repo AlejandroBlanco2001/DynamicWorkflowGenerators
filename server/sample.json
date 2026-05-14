@@ -9,12 +9,10 @@
         },
         "filter_clients_by_email": {
             "type": "filter",
-            "items": {
-                "var": "get_clients.items"
-            },
+            "items_path": "get_clients.items",
             "condition": {
                 "==": [
-                    {"var": "item.email"},
+                    {"var": "email"},
                     "test@test.com"
                 ]
             }

@@ -28,7 +28,8 @@ def create_db_and_tables():
 
 def seed_database(session: Session):
     client = Clients(name="John Doe", email="john.doe@example.com")
-    session.add(client)
+    client2 = Clients(name="Jane Doe", email="test@test.com")
+    session.add_all([client, client2])
     session.flush()
 
     assert client.id is not None
