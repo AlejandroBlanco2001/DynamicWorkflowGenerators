@@ -2,7 +2,7 @@ import asyncio
 from temporalio.client import Client
 from temporalio.worker import Worker
 from workflow import DynamicWorkflow
-from actions import get_clients
+from actions import get_clients, get_projects
 
 async def main():
     client = await Client.connect("localhost:7233")
@@ -11,7 +11,7 @@ async def main():
         client,
         task_queue="workflow",
         workflows=[DynamicWorkflow],
-        activities=[get_clients],
+        activities=[get_clients, get_projects],
     )
 
     await worker.run()
