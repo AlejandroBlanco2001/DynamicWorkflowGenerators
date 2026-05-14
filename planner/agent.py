@@ -1,5 +1,6 @@
 from google.adk.agents.llm_agent import Agent
 from google.adk.models.lite_llm import LiteLlm
+from .prompt import WORKFLOW_PLANNER_AGENT_PROMPT
 
 model = LiteLlm(
     model='openai/gpt-4o',
@@ -8,6 +9,6 @@ model = LiteLlm(
 root_agent = Agent(
     model=model,
     name='root_agent',
-    description='A helpful assistant for user questions.',
-    instruction='Answer user questions to the best of your knowledge',
+    description='A workflow planner agent for the user to create a workflow to perform a task.',
+    instruction=WORKFLOW_PLANNER_AGENT_PROMPT,
 )
