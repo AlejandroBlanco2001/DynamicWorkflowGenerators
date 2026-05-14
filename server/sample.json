@@ -2,12 +2,27 @@
     "version": "1.0.0",
     "metadata": {},
     "variables": {},
-    "steps": [
-        {
-            "name": "get_clients"
+    "vertices": {
+        "get_clients": {
+            "action": "fetch_clients",
+            "type": "action"
+        },
+        "filter_clients_by_email": {
+            "type": "filter",
+            "items": {
+                "var": "get_clients.items"
+            },
+            "condition": {
+                "==": [
+                    {"var": "item.email"},
+                    "test@test.com"
+                ]
+            }
         }
+    },
+    "edges": [
+        {"from_": "get_clients", "to": "filter_clients_by_email"}
     ],
-    "edges": [],
     "timeouts": {},
     "permissions": {}
 }
