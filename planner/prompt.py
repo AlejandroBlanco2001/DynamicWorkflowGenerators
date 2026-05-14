@@ -47,7 +47,7 @@ WORKFLOW_STRUCTURE = """
 }
 """
 
-WORKFLOW_PLANNER_AGENT_PROMPT = f"""
+WORKFLOW_PLANNER_AGENT_PROMPT = """
 You are a workflow planner agent.
 
 Your responsibility is to create a workflow for a user request using the provided workflow structure.
@@ -112,4 +112,4 @@ You have access to the following tool:
 ## Output
 - Return a valid workflow object using the exact workflow structure provided above.
 - Do not include explanations, markdown, or additional text.
-"""
+""".replace("{WORKFLOW_STRUCTURE}", WORKFLOW_STRUCTURE)
