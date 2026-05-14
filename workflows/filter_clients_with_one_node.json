@@ -1,0 +1,23 @@
+{
+    "version": "1.0.0",
+    "metadata": {},
+    "variables": {},
+    "vertices": {
+        "get_clients": {
+            "action": "fetch_clients",
+            "type": "action",
+            "filters": [
+                {
+                    "field": "email",
+                    "operator": "eq",
+                    "value": "depend1956@yahoo.com"
+                }
+            ]
+        }
+    },
+    "edges": [
+        {"from_": "get_clients", "to": "END"}
+    ],
+    "timeouts": {},
+    "permissions": {}
+}

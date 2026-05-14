@@ -13,7 +13,7 @@
             "condition": {
                 "==": [
                     {"var": "email"},
-                    "test@test.com"
+                    "edt1975@live.com"
                 ]
             }
         }
