@@ -8,5 +8,6 @@ dependencies = [
     "fastapi[standard]>=0.136.1",
     "google-adk>=1.33.0",
     "litellm>=1.83.14",
+    "sqlmodel>=0.0.38",
     "temporalio>=1.27.1",
 ]
