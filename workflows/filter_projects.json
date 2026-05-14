@@ -1,0 +1,26 @@
+{
+    "version": "1.0.0",
+    "metadata": {},
+    "variables": {},
+    "vertices": {
+        "get_projects": {
+            "action": "fetch_projects",
+            "type": "action"
+        },
+        "filter_projects_by_status": {
+            "type": "filter",
+            "items_path": "get_projects.items",
+            "condition": {
+                "==": [
+                    {"var": "status"},
+                    "negotiation"
+                ]
+            }
+        }
+    },
+    "edges": [
+        {"from_": "get_projects", "to": "filter_projects_by_status"}
+    ],
+    "timeouts": {},
+    "permissions": {}
+}
