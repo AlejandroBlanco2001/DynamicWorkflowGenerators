@@ -50,7 +50,7 @@ async def execute_action(step: Step, state: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Action step ID is required")
 
     result = await workflow.execute_activity(
-        step.id,
+        step.action,
         args=[step.inputs, step.filters],
         start_to_close_timeout=timedelta(seconds=10),
     )
@@ -109,7 +109,7 @@ class DynamicWorkflow:
             node = definition.vertices[current_id]
             node.id = current_id
             result = await execute_step(node, state)
-            state["node_outputs"][current_id] = result
+            state["node_outputs"][node.action] = result
             workflow.logger.info(f"Node outputs: {state['node_outputs']}")
             current_id = next_map.get(current_id)
 

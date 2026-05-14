@@ -3,7 +3,7 @@
     "metadata": {},
     "variables": {},
     "vertices": {
-        "get_clients": {
+        "step_1": {
             "action": "fetch_clients",
             "type": "action",
             "filters": [
@@ -16,7 +16,7 @@
         }
     },
     "edges": [
-        {"from_": "get_clients", "to": "END"}
+        {"from_": "step_1", "to": "END"}
     ],
     "timeouts": {},
     "permissions": {}

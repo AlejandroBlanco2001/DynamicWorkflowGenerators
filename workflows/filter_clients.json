@@ -3,11 +3,11 @@
     "metadata": {},
     "variables": {},
     "vertices": {
-        "get_clients": {
+        "step_1": {
             "action": "fetch_clients",
             "type": "action"
         },
-        "filter_clients_by_email": {
+        "step_2": {
             "type": "filter",
             "items_path": "get_clients.items",
             "condition": {
@@ -19,7 +19,8 @@
         }
     },
     "edges": [
-        {"from_": "get_clients", "to": "filter_clients_by_email"}
+        {"from_": "step_1", "to": "step_2"},
+        {"from_": "step_2", "to": "END"}
     ],
     "timeouts": {},
     "permissions": {}

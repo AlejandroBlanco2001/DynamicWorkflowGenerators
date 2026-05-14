@@ -3,11 +3,11 @@
     "metadata": {},
     "variables": {},
     "vertices": {
-        "get_projects": {
-            "action": "fetch_projects",
+        "step_1": {
+            "action": "get_projects",
             "type": "action"
         },
-        "filter_projects_by_status": {
+        "step_2": {
             "type": "filter",
             "items_path": "get_projects.items",
             "condition": {
@@ -19,7 +19,8 @@
         }
     },
     "edges": [
-        {"from_": "get_projects", "to": "filter_projects_by_status"}
+        {"from_": "step_1", "to": "step_2"},
+        {"from_": "step_2", "to": "END"}
     ],
     "timeouts": {},
     "permissions": {}
