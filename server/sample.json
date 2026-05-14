@@ -1,0 +1,13 @@
+{
+    "version": "1.0.0",
+    "metadata": {},
+    "variables": {},
+    "steps": [
+        {
+            "name": "get_clients"
+        }
+    ],
+    "edges": [],
+    "timeouts": {},
+    "permissions": {}
+}
