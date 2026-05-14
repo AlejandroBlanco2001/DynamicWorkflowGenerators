@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from datetime import timedelta
 from typing import Any, Callable, Coroutine, Literal
 from json_logic import jsonLogic, get_var
+from filters import Filter
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -15,7 +16,7 @@ class Step(BaseModel):
     inputs: dict[str, Any] | None = None
     condition: dict[str, Any] | None = None
     items_path: str | None = None
-
+    filters: list[Filter] | None = None
 
 class FilterStep(Step):
     type: Literal["filter"]
@@ -50,7 +51,7 @@ async def execute_action(step: Step, state: dict[str, Any]) -> dict[str, Any]:
 
     result = await workflow.execute_activity(
         step.id,
-        step.inputs or {},
+        args=[step.inputs, step.filters],
         start_to_close_timeout=timedelta(seconds=10),
     )
 
@@ -102,6 +103,9 @@ class DynamicWorkflow:
         current_id: str | None = start_nodes.pop()
 
         while current_id:
+            if current_id == "END":
+                break
+
             node = definition.vertices[current_id]
             node.id = current_id
             result = await execute_step(node, state)
