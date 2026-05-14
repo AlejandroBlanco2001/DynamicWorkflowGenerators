@@ -3,6 +3,7 @@ from models import Clients, Projects, seed_database, create_db_and_tables, Sessi
 from sqlmodel import select
 import uvicorn
 from workflow import WorkflowDefinition, DynamicWorkflow
+from actions import ACTION_METADATA
 from temporalio.client import Client
 import logging
 
@@ -44,6 +45,14 @@ def get_projects(session: SessionDep):
     statement = select(Projects)
     result = session.exec(statement)
     return result.all()
+
+@app.get("/actions")
+def list_actions():
+    # TODO: Make the operators a list, so we can just return it without hardcoding the operators
+    return {
+        "actions": [{"name": name, **meta} for name, meta in ACTION_METADATA.items()],
+        "operators": ["eq", "neq", "gt", "gte", "lt", "lte", "contains"],
+    }
 
 @app.post("/workflow")
 async def run_workflow(

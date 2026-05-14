@@ -103,3 +103,16 @@ REGISTRY = {
     "get_clients": get_clients,
     "get_projects": get_projects,
 }
+
+ACTION_METADATA = {
+    "get_clients": {
+        "description": "Fetch clients from the database",
+        "filterable_fields": list(QUERYBALE_FIELDS["clients"].keys()),
+        "output": {"items": "list of client objects"},
+    },
+    "get_projects": {
+        "description": "Fetch projects from the database",
+        "filterable_fields": list(QUERYBALE_FIELDS["projects"].keys()),
+        "output": {"items": "list of project objects"},
+    },
+}
