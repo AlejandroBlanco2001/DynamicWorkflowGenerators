@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends
-from models import Clients, seed_database, create_db_and_tables, SessionDep
+from models import Clients, Projects, seed_database, create_db_and_tables, SessionDep
 from sqlmodel import select
 import uvicorn
 from workflow import WorkflowDefinition, DynamicWorkflow
@@ -39,6 +39,11 @@ def get_clients(session: SessionDep):
     result = session.exec(statement)
     return result.all()
 
+@app.get("/projects")
+def get_projects(session: SessionDep):
+    statement = select(Projects)
+    result = session.exec(statement)
+    return result.all()
 
 @app.post("/workflow")
 async def run_workflow(
