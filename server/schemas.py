@@ -1,0 +1,40 @@
+from pydantic import BaseModel
+from typing import Any, Literal
+from dataclasses import dataclass
+
+@dataclass
+class Filter:
+    field: str
+    operator: Literal["eq", "neq", "gt", "gte", "lt", "lte", "contains"]
+    value: Any
+
+
+class Step(BaseModel):
+    id: str | None = None
+    type: str
+    action: str | None = None
+    inputs: dict[str, Any] | None = None
+    condition: dict[str, Any] | None = None
+    items_path: str | None = None
+    filters: list[Filter] | None = None
+
+class FilterStep(Step):
+    type: Literal["filter"]
+    items_path: str
+    condition: dict[str, Any]
+
+
+class Edge(BaseModel):
+    from_: str
+    to: str
+
+
+class WorkflowDefinition(BaseModel):
+    version: str
+    metadata: dict
+    variables: dict
+    vertices: dict[str, Step]
+    edges: list[Edge]
+    timeouts: dict
+    permissions: dict
+
