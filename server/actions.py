@@ -1,8 +1,8 @@
 from temporalio import activity
 from sqlmodel import select, Session
 from typing import Any, Literal, Callable
-from models import Clients, Projects, engine
-from filters import Filter
+from server.models import Clients, Projects, engine
+from server.schemas import Filter
 import logging
 
 logging.basicConfig(level=logging.INFO)

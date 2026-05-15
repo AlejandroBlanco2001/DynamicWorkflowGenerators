@@ -2,8 +2,8 @@ import os
 import asyncio
 from temporalio.client import Client
 from temporalio.worker import Worker
-from workflow import DynamicWorkflow
-from actions import get_clients, get_projects
+from server.workflow import DynamicWorkflow
+from server.actions import get_clients, get_projects
 
 async def main():
     temporal_address = os.getenv("TEMPORAL_ADDRESS", "localhost:7233")

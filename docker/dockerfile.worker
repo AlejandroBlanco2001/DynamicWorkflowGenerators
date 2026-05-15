@@ -19,6 +19,6 @@ ENV PYTHONUNBUFFERED=1 \
 
 COPY --from=builder /app/.venv /app/.venv
 
-COPY server/worker.py server/workflow.py server/actions.py server/filters.py server/json_logic.py server/models.py ./
+COPY . .
 
-CMD ["python", "worker.py"]
+CMD ["python", "-m", "server.worker"]

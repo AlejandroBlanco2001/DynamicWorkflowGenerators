@@ -1,12 +1,13 @@
 import os
 from fastapi import FastAPI, Depends
-from models import Clients, Projects, seed_database, create_db_and_tables, SessionDep
+from server.models import Clients, Projects, seed_database, create_db_and_tables, SessionDep
 from sqlmodel import select
 import uvicorn
-from workflow import WorkflowDefinition, DynamicWorkflow
-from actions import ACTION_METADATA
+from server.workflow import DynamicWorkflow
+from server.actions import ACTION_METADATA
 from temporalio.client import Client
 import logging
+from server.schemas import WorkflowDefinition
 
 log = logging.getLogger(__name__)
 
