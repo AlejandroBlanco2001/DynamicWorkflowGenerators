@@ -76,8 +76,8 @@ Your responsibility is to create a workflow for a user request using the provide
 
 ### Filter Steps (`type: "filter"`)
 - MUST have `"items_path"` pointing to the output of a preceding action step.
-  - Format: `"{action_name}.items"` — where `action_name` is the `action` value of the preceding step.
-  - Example: if the preceding step has `"action": "fetch_clients"`, use `"items_path": "fetch_clients.items"`.
+  - Format: `"{step_id}.items"` — where `step_id` is the key of the preceding step in `vertices`.
+  - Example: if the preceding step is `"step_1"`, use `"items_path": "step_1.items"`.
 - MUST have `"condition"` using json-logic syntax.
 - MUST NOT have `"action"`, `"inputs"`, or `"filters"`.
 
@@ -157,7 +157,7 @@ User: "Get clients with email edt1975@live.com"
         },
         "step_2": {
             "type": "filter",
-            "items_path": "fetch_clients.items",
+            "items_path": "step_1.items",
             "condition": {"==": [{"var": "email"}, "edt1975@live.com"]}
         }
     },
@@ -204,7 +204,7 @@ Review the JSON workflow object and verify it passes every rule in the rubric be
 - [ ] MUST NOT have `"items_path"` or `"condition"`.
 
 ### Filter Steps (`type: "filter"`)
-- [ ] MUST have `"items_path"` in the format `"<action_name>.items"`, where `<action_name>` matches the `action` value of the preceding action step.
+- [ ] MUST have `"items_path"` in the format `"<step_id>.items"`, where `<step_id>` is the key of the preceding action step in `vertices`.
 - [ ] MUST have `"condition"` using valid json-logic syntax.
 - [ ] MUST NOT have `"action"`, `"inputs"`, or `"filters"`.
 
@@ -267,7 +267,7 @@ Action step MUST have: `action`, `type: "action"`.
 Action step MAY have: `filters` (queryable fields only), `inputs`, `timeouts`.
 Action step MUST NOT have: `items_path`, `condition`.
 
-Filter step MUST have: `type: "filter"`, `items_path` (`"<action_name>.items"`), `condition` (json-logic).
+Filter step MUST have: `type: "filter"`, `items_path` (`"<step_id>.items"`), `condition` (json-logic).
 Filter step MUST NOT have: `action`, `inputs`, `filters`.
 
 All steps MUST appear in `edges`. Last step MUST edge to `"END"`.

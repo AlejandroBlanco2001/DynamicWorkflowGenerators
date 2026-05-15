@@ -4,7 +4,7 @@
     "variables": {},
     "vertices": {
         "step_1": {
-            "action": "fetch_clients",
+            "action": "get_clients",
             "type": "action",
             "filters": [
                 {

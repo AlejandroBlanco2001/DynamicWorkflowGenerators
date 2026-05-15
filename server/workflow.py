@@ -109,7 +109,7 @@ class DynamicWorkflow:
             node = definition.vertices[current_id]
             node.id = current_id
             result = await execute_step(node, state)
-            state["node_outputs"][node.action] = result
+            state["node_outputs"][node.id] = result
             workflow.logger.info(f"Node outputs: {state['node_outputs']}")
             current_id = next_map.get(current_id)
 

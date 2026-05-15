@@ -4,12 +4,12 @@
     "variables": {},
     "vertices": {
         "step_1": {
-            "action": "fetch_clients",
+            "action": "get_clients",
             "type": "action"
         },
         "step_2": {
             "type": "filter",
-            "items_path": "get_clients.items",
+            "items_path": "step_1.items",
             "condition": {
                 "==": [
                     {"var": "email"},

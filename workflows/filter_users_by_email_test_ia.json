@@ -1,0 +1,35 @@
+{
+    "version": "1.0.0",
+    "metadata": {
+        "description": "Workflow to get all clients and filter by email not equal to test@test.com"
+    },
+    "variables": {
+        "client_source": "database"
+    },
+    "vertices": {
+        "step_1": {
+            "action": "get_clients",
+            "type": "action",
+            "inputs": {},
+            "filters": [
+                {
+                    "field": "email",
+                    "operator": "neq",
+                    "value": "test@test.com"
+                }
+            ]
+        }
+    },
+    "edges": [
+        {
+            "from_": "step_1",
+            "to": "END"
+        }
+    ],
+    "timeouts": {
+        "step_1": "00:05:00"
+    },
+    "permissions": {
+        "database_access": true
+    }
+}
