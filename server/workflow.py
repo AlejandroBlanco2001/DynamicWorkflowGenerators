@@ -1,43 +1,12 @@
 from temporalio import workflow
-from pydantic import BaseModel
 from datetime import timedelta
-from typing import Any, Callable, Coroutine, Literal
-from json_logic import jsonLogic, get_var
-from filters import Filter
+from typing import Any, Callable, Coroutine
+from server.json_logic import jsonLogic, get_var
 import logging
+from server.graph import build_adjacency_list, topological_sort
+from server.schemas import Step, WorkflowDefinition
 
 logging.basicConfig(level=logging.INFO)
-
-
-class Step(BaseModel):
-    id: str | None = None
-    type: str
-    action: str | None = None
-    inputs: dict[str, Any] | None = None
-    condition: dict[str, Any] | None = None
-    items_path: str | None = None
-    filters: list[Filter] | None = None
-
-class FilterStep(Step):
-    type: Literal["filter"]
-    items_path: str
-    condition: dict[str, Any]
-
-
-class Edge(BaseModel):
-    from_: str
-    to: str
-
-
-class WorkflowDefinition(BaseModel):
-    version: str
-    metadata: dict
-    variables: dict
-    vertices: dict[str, Step]
-    edges: list[Edge]
-    timeouts: dict
-    permissions: dict
-
 
 StepHandler = Callable[[Step, dict[str, Any]], Coroutine[Any, Any, dict[str, Any]]]
 
@@ -95,22 +64,16 @@ class DynamicWorkflow:
 
         assert definition.vertices
 
-        next_map = {e.from_: e.to for e in definition.edges}
-        start_nodes = set(next_map) - set(next_map.values())
+        adjacency_map = build_adjacency_list(definition.edges)
+        execution_order = topological_sort(adjacency_map)
 
-        assert start_nodes, "No start node (cycle?)"
+        workflow.logger.info(f"Execution order: {execution_order}")
 
-        current_id: str | None = start_nodes.pop()
-
-        while current_id:
-            if current_id == "END":
-                break
-
+        for current_id in execution_order:
             node = definition.vertices[current_id]
             node.id = current_id
             result = await execute_step(node, state)
             state["node_outputs"][node.id] = result
             workflow.logger.info(f"Node outputs: {state['node_outputs']}")
-            current_id = next_map.get(current_id)
 
         return state
