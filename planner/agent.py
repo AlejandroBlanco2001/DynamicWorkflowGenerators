@@ -4,7 +4,6 @@ from google.adk.models.lite_llm import LiteLlm
 from google.adk.agents.sequential_agent import SequentialAgent
 from .prompt import WORKFLOW_PLANNER_AGENT_PROMPT, REVIEWER_AGENT_PROMPT, REFINER_WORKFLOW_AGENT_PROMPT, REVIEWER_DYNAMIC_PROMPT, REFINER_WORKFLOW_DYNAMIC_PROMPT
 from .tools import get_actions_operators, exit_evaluation_loop
-from google.adk.tools.agent_tool import AgentTool
 
 model = LiteLlm(
     model='openai/gpt-4o',
@@ -63,9 +62,6 @@ root_agent = Agent(
     ## Sub-Agents
     - `workflow_creator_agent`: A workflow creator agent to create, evaluate and refine a new workflow.
 
-    ## Tools
-    - `reviewer_agent`: A tool to evaluate the proposed workflow by the user.
     """,
     sub_agents=[workflow_creator_agent],
-    tools=[AgentTool(reviewer_agent)],
 )
