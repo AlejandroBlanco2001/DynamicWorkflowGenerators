@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Depends
 from models import Clients, Projects, seed_database, create_db_and_tables, SessionDep
 from sqlmodel import select
@@ -11,7 +12,8 @@ log = logging.getLogger(__name__)
 
 
 async def get_client():
-    client = await Client.connect("localhost:7233")
+    temporal_address = os.getenv("TEMPORAL_ADDRESS", "localhost:7233")
+    client = await Client.connect(temporal_address)
     yield client
 
 
@@ -69,4 +71,6 @@ async def run_workflow(
     return {"message": "Workflow started", "workflow_id": handler.id}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=3000)
+    port = os.getenv("API_PORT", 3000)
+    port = int(port)
+    uvicorn.run(app, host="0.0.0.0", port=port)

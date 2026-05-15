@@ -1,7 +1,9 @@
+import os 
 import httpx
 from google.adk.tools.tool_context import ToolContext
 
-BASE_URL = "http://127.0.0.1:3000"
+PORT = os.getenv("API_PORT", 3000)
+BASE_URL = f"http://127.0.0.1:{PORT}"
 
 COMPLETE_REVIEW_RESULT = "PASSED"
 
