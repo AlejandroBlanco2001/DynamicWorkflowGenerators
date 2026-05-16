@@ -44,3 +44,15 @@ ExecutionState = Literal["pending", "running", "skipped", "completed", "failed"]
 class State(BaseModel):
     node_outputs: dict[str, dict[str, Any]]
     execution_state: dict[str, ExecutionState]
+
+class StepsExecuted(BaseModel):
+    step_id: str
+    step_name: str
+    step_type: str
+    inputs: str
+
+class ExecutionResult(BaseModel):
+    result: Literal["PASSED", "FAILED", "ABORTED"]
+    message: str
+    items: list[Any]
+    steps: list[StepsExecuted]
