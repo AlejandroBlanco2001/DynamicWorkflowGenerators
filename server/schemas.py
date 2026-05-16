@@ -13,6 +13,7 @@ class Step(BaseModel):
     id: str | None = None
     type: str
     action: str | None = None
+    depends_on: list[str] | None = None
     inputs: dict[str, Any] | None = None
     condition: dict[str, Any] | None = None
     items_path: str | None = None
@@ -20,7 +21,7 @@ class Step(BaseModel):
 
 class FilterStep(Step):
     type: Literal["filter"]
-    items_path: str
+    items_path: str | None = None
     condition: dict[str, Any]
 
 
@@ -38,3 +39,8 @@ class WorkflowDefinition(BaseModel):
     timeouts: dict
     permissions: dict
 
+ExecutionState = Literal["pending", "running", "skipped", "completed", "failed"]
+
+class State(BaseModel):
+    node_outputs: dict[str, dict[str, Any]]
+    execution_state: dict[str, ExecutionState]
