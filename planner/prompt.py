@@ -7,25 +7,24 @@ WORKFLOW_STRUCTURE = """
     "variables": "dict",
     "vertices": {
         "step_id": {
-            "action": "string",
+            "action": "string",       # Only for action steps
             "type": "action | filter",
-            "inputs": "dict",
-            "filters": [
+            "inputs": "dict",         # Only for action steps
+            "filters": [              # Only for action steps
                 {
                     "field": "string",
                     "operator": "string",
                     "value": "string"
                 }
-            ], # Only for action steps
+            ],
+            "depends_on": ["step_id"],  # Optional. Step is skipped if any dependency produced no items.
 
-            "items_path": "string",  # Only for filter steps
-
-            "condition": {
-                "operator": [
-                    {"var": "field_name"},
+            "condition": {            # Only for filter steps, follows json-logic syntax.
+                "operator": [         # Data context is the full node_outputs dict.
+                    {"var": "step_id.items"},  # Reference upstream step output via step_id.items
                     "value"
                 ]
-            }  # Only for filter steps, follows json-logic syntax
+            }
         }
     },
 
@@ -72,44 +71,46 @@ Your responsibility is to create a workflow for a user request using the provide
 ### Action Steps (`type: "action"`)
 - MUST have `"action"` set to a valid action name from `get_actions_operators`.
 - MAY have `"filters"` to push filtering to the database (only for queryable fields).
-- MUST NOT have `"items_path"` or `"condition"`.
+- MAY have `"depends_on"` — list of step IDs that must produce items for this step to run.
+- MUST NOT have `"condition"`.
 
 ### Filter Steps (`type: "filter"`)
-- MUST have `"items_path"` pointing to the output of a preceding action step.
-  - Format: `"{step_id}.items"` — where `step_id` is the key of the preceding step in `vertices`.
-  - Example: if the preceding step is `"step_1"`, use `"items_path": "step_1.items"`.
 - MUST have `"condition"` using json-logic syntax.
-- MUST NOT have `"action"`, `"inputs"`, or `"filters"`.
+- The condition data context is the full `node_outputs` dict — reference upstream outputs via `{"var": "step_id.items"}`.
+- Use json-logic's `"filter"` operator to filter an array: `{"filter": [{"var": "step_id.items"}, <predicate>]}`.
+- MAY have `"depends_on"` — step is skipped entirely if any listed dependency produced no items.
+- MUST NOT have `"action"`, `"inputs"`, `"filters"`, or `"items_path"`.
 
 ## Decision: Action Filter vs Filter Step
 
 Use **action filters** (inline `filters` on an action step) when:
 - The field is queryable (listed in `get_actions_operators` response).
 - The filter is a simple equality or range check on a single field.
-- No branching or multi-field logic is needed.
 
 Use a **filter step** (separate node with json-logic `condition`) when:
 - The field is NOT queryable.
 - The logic is complex: multi-field conditions, computed comparisons, OR/AND/NOT branches.
-- You need to combine results from multiple upstream steps.
+- You need to combine or cross-reference results from multiple upstream steps.
 
 Prefer action filters when possible — they run against the database and are faster.
 
+## Branching with `depends_on`
+- Add `"depends_on": ["step_id", ...]` to any step to make it conditional.
+- If ALL listed dependencies produced items, the step runs normally.
+- If ANY dependency produced no items (`[]`), the step is **skipped** and returns `{"items": []}`.
+- Use this to build conditional paths: downstream steps only run when upstream steps found results.
+
 ## Condition Syntax (filter steps only)
-Must follow json-logic syntax.
+Must follow json-logic syntax. The data context is the full `node_outputs` dict.
 
-Example — simple equality:
-{
-    "==": [{"var": "email"}, "edt1975@live.com"]
-}
+Reference upstream step output:
+{"var": "step_1.items"}  →  the items array produced by step_1
 
-Example — compound AND:
-{
-    "and": [
-        {">": [{"var": "age"}, 30]},
-        {"==": [{"var": "status"}, "active"]}
-    ]
-}
+Example — filter array from step_1 by email:
+{"filter": [{"var": "step_1.items"}, {"==": [{"var": "email"}, "edt1975@live.com"]}]}
+
+Example — filter with compound AND predicate:
+{"filter": [{"var": "step_1.items"}, {"and": [{">": [{"var": "age"}, 30]}, {"==": [{"var": "status"}, "active"]}]}]}
 
 ## Filters Syntax (action steps only)
 Each entry in the `filters` array:
@@ -121,8 +122,9 @@ Each entry in the `filters` array:
 
 ## Edges
 - Every step MUST appear in `edges`.
-- The final step MUST have `"to": "END"`.
-- Steps execute in the order defined by edges (linear chain only — no branching).
+- The final step(s) MUST have `"to": "END"`.
+- Edges can branch: one step may have multiple outgoing edges (fan-out) or multiple steps may converge on one step.
+- Execution order is determined by topological sort of the edge graph.
 
 ## Worked Examples
 
@@ -145,20 +147,46 @@ User: "Get clients with email depend1956@yahoo.com"
 }
 
 ### Example 2: Non-queryable or complex filter — use action + filter node
-User: "Get clients with email edt1975@live.com"
+User: "Get clients whose name contains 'Corp'"
 {
     "version": "1.0.0",
     "metadata": {},
     "variables": {},
     "vertices": {
         "step_1": {
-            "action": "fetch_clients",
+            "action": "get_clients",
             "type": "action"
         },
         "step_2": {
             "type": "filter",
-            "items_path": "step_1.items",
-            "condition": {"==": [{"var": "email"}, "edt1975@live.com"]}
+            "depends_on": ["step_1"],
+            "condition": {"filter": [{"var": "step_1.items"}, {"in": ["Corp", {"var": "name"}]}]}
+        }
+    },
+    "edges": [
+        {"from_": "step_1", "to": "step_2"},
+        {"from_": "step_2", "to": "END"}
+    ],
+    "timeouts": {},
+    "permissions": {}
+}
+
+### Example 3: Branching — two parallel actions, each with a conditional downstream step
+User: "Get active projects and their clients, but only if there are active projects"
+{
+    "version": "1.0.0",
+    "metadata": {},
+    "variables": {},
+    "vertices": {
+        "step_1": {
+            "action": "get_projects",
+            "type": "action",
+            "filters": [{"field": "status", "operator": "eq", "value": "active"}]
+        },
+        "step_2": {
+            "action": "get_clients",
+            "type": "action",
+            "depends_on": ["step_1"]
         }
     },
     "edges": [
@@ -201,16 +229,23 @@ Review the JSON workflow object and verify it passes every rule in the rubric be
 ### Action Steps (`type: "action"`)
 - [ ] MUST have `"action"` set to a valid, known action name.
 - [ ] MAY have `"filters"` — each filter MUST use a queryable field and a valid operator.
+- [ ] MAY have `"depends_on"` — each listed step ID MUST exist in `vertices`.
 - [ ] MUST NOT have `"items_path"` or `"condition"`.
 
 ### Filter Steps (`type: "filter"`)
-- [ ] MUST have `"items_path"` in the format `"<step_id>.items"`, where `<step_id>` is the key of the preceding action step in `vertices`.
 - [ ] MUST have `"condition"` using valid json-logic syntax.
-- [ ] MUST NOT have `"action"`, `"inputs"`, or `"filters"`.
+- [ ] Condition MUST reference upstream step outputs via `{"var": "step_id.items"}` — NOT bare field names at the top level.
+- [ ] MUST use json-logic's `"filter"` operator to filter arrays: `{"filter": [{"var": "step_id.items"}, <predicate>]}`.
+- [ ] MAY have `"depends_on"` — each listed step ID MUST exist in `vertices`.
+- [ ] MUST NOT have `"action"`, `"inputs"`, `"filters"`, or `"items_path"`.
 
 ### Filter Strategy
 - [ ] If the filtered field is queryable, an action filter SHOULD be used instead of a separate filter step (prefer DB-side filtering).
 - [ ] A filter step MUST only appear after an action step that produces the collection it filters.
+
+### Branching
+- [ ] If a step has `"depends_on"`, every listed step ID MUST exist in `vertices`.
+- [ ] Steps with `"depends_on"` MUST still appear in `edges`.
 
 ### General
 - [ ] No repeated actions doing the same thing.
@@ -264,13 +299,14 @@ Check the reviewer output (provided in context):
 ## Step Type Contracts
 
 Action step MUST have: `action`, `type: "action"`.
-Action step MAY have: `filters` (queryable fields only), `inputs`, `timeouts`.
+Action step MAY have: `filters` (queryable fields only), `inputs`, `timeouts`, `depends_on`.
 Action step MUST NOT have: `items_path`, `condition`.
 
-Filter step MUST have: `type: "filter"`, `items_path` (`"<step_id>.items"`), `condition` (json-logic).
-Filter step MUST NOT have: `action`, `inputs`, `filters`.
+Filter step MUST have: `type: "filter"`, `condition` (json-logic using `{"filter": [{"var": "step_id.items"}, <predicate>]}`).
+Filter step MAY have: `depends_on`.
+Filter step MUST NOT have: `action`, `inputs`, `filters`, `items_path`.
 
-All steps MUST appear in `edges`. Last step MUST edge to `"END"`.
+All steps MUST appear in `edges`. Last step(s) MUST edge to `"END"`.
 """
 
 REFINER_WORKFLOW_DYNAMIC_PROMPT = """
