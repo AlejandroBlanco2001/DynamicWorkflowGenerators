@@ -1,102 +1,69 @@
 from temporalio import activity
-from sqlmodel import select, Session
-from typing import Any, Literal, Callable
-from server.models import Clients, Projects, engine
+from typing import Any
 from server.schemas import Filter
 import logging
+from server.agent import root_agent
+from google.adk.sessions.in_memory_session_service import InMemorySessionService
+from google.adk import Runner
+import server.tools as tools
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
-AVAILABLE_OPERATORS = Literal[
-    "eq",
-    "neq",
-    "gt",
-    "gte",
-    "lt",
-    "lte",
-    "contains",
-]
+@activity.defn(name="agentic_node")
+async def agentic_node(input: dict[str, Any]) -> dict[str, Any]:
+    session_service = InMemorySessionService()
 
-operators: dict[AVAILABLE_OPERATORS, Callable] = {
-    "eq": lambda field, value: field == value,
-    "neq": lambda field, value: field != value,
-    "gt": lambda field, value: field > value,
-    "gte": lambda field, value: field >= value,
-    "lt": lambda field, value: field < value,
-    "lte": lambda field, value: field <= value,
-    "contains": lambda field, value: value in field,
-}
+    if input["content"] is None:
+        raise ValueError("Content is required!")
+    
+    session = await session_service.create_session(
+      state={}, app_name='agentic_node', user_id='user_dc'
+    )
 
-QUERYBALE_FIELDS = {
-    "clients": {
-        "email": Clients.email,
-        "name": Clients.name,
-    },
-    "projects": {
-        "name": Projects.name,
-        "status": Projects.status,
-    },
-}
+    runner = Runner(
+        app_name="agentic_node",
+        agent=root_agent,
+        session_service=session_service
+    )
+    
+    events_async =  runner.run_async(
+        session_id=session.id, user_id=session.user_id, new_message=input["content"]
+    )
 
-async def build_statement(statement: Any, filters: list[Filter], entity: str) -> Any:
-    for filter in filters:
-        if filter.field not in QUERYBALE_FIELDS[entity]:
-            raise ValueError(f"Field {filter.field} not found in {entity}")
+    async for event in events_async:
+        print(f"Event received: {event}")
 
-        if filter.operator not in operators:
-            raise ValueError(f"Operator {filter.operator} not found in operators")
-
-        column = QUERYBALE_FIELDS[entity][filter.field]
-        operator = operators[filter.operator]
-        value = filter.value
-
-        statement = statement.where(operator(column, value))
-
-    return statement
+    return {
+        "items": []
+    }
 
 @activity.defn(name="get_clients")
 async def get_clients(input: dict[str, Any], filters: list[Filter] | None = None) -> dict[str, list[Any]]:
-    with Session(engine) as session:
-        statement = select(Clients)
+    LOG.info(f"Building statement for clients with filters: {filters}")
 
-        LOG.info(f"Building statement for clients with filters: {filters}")
+    try: 
+        clients = await tools.get_clients(filters)
+    except Exception as e:
+        LOG.error(f"Error getting clients: {e}")
+        raise e
 
-        if filters:
-            statement = await build_statement(statement, filters, "clients")
-        else:
-            statement = statement.limit(10)
-
-        clients = session.exec(statement).all()
-
-        return {
-            "items": [
-                client.model_dump()
-                for client in clients
-            ]
-        }
+    return {
+        "items": clients
+    }
 
 
 @activity.defn(name="get_projects")
 async def get_projects(input: dict[str, Any], filters: list[Filter] | None = None) -> dict[str, list[Any]]:
+    try:
+        projects = await tools.get_projects(filters)
+    except Exception as e:
+        LOG.error(f"Error getting projects: {e}")
+        raise e
 
-    with Session(engine) as session:
-
-        statement = select(Projects)
-
-        if filters:
-            statement = await build_statement(statement, filters, "projects")
-        else:
-            statement = statement.limit(10)
-
-        projects = session.exec(statement).all()
-
-        return {
-            "items": [
-                project.model_dump()
-                for project in projects
-            ]
-        }
+    return {
+        "items": projects
+    }
 
 
 REGISTRY = {
@@ -107,12 +74,12 @@ REGISTRY = {
 ACTION_METADATA = {
     "get_clients": {
         "description": "Fetch clients from the database",
-        "filterable_fields": list(QUERYBALE_FIELDS["clients"].keys()),
+        "filterable_fields": list(tools.QUERYBALE_FIELDS["clients"].keys()),
         "output": {"items": "list of client objects"},
     },
     "get_projects": {
         "description": "Fetch projects from the database",
-        "filterable_fields": list(QUERYBALE_FIELDS["projects"].keys()),
+        "filterable_fields": list(tools.QUERYBALE_FIELDS["projects"].keys()),
         "output": {"items": "list of project objects"},
     },
 }
