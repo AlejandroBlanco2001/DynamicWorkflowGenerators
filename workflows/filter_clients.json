@@ -19,8 +19,7 @@
         }
     },
     "edges": [
-        {"from_": "step_1", "to": "step_2"},
-        {"from_": "step_2", "to": "END"}
+        {"from_": "step_1", "to": "step_2"}
     ],
     "timeouts": {},
     "permissions": {}

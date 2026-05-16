@@ -3,8 +3,13 @@
     "metadata": {},
     "variables": {},
     "vertices": {
-        "step_1": {
+        "step_0": {
             "action": "get_projects",
+            "type": "action",
+            "depends_on": ["step_3"]
+        },
+        "step_1": {
+            "action": "get_clients",
             "type": "action"
         },
         "step_2": {
@@ -15,11 +20,21 @@
                     { "==": [ { "var": "email" }, "edt1975@live.com" ] }
                 ]
             }
+        },
+        "step_3": {
+            "type": "filter",
+            "condition": {
+                "all": [
+                    {"var": "step_2.matched"},
+                    { "==": [ { "var": "email" }, "edt1975@live.com" ] }
+                ]
+            }
         }
     },
     "edges": [
         {"from_": "step_1", "to": "step_2"},
-        {"from_": "step_2", "to": "END"}
+        {"from_": "step_2", "to": "step_3"},
+        {"from_": "step_3", "to": "step_0"}
     ],
     "timeouts": {},
     "permissions": {}
