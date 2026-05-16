@@ -1,10 +1,18 @@
 from collections import defaultdict
 from server.schemas import Edge
+import logging
+
+logging.basicConfig(level=logging.INFO)
+LOG = logging.getLogger(__name__)
 
 def build_adjacency_list(edges: list[Edge]) -> dict[str, list[str]]:
     adj = defaultdict(list)
 
-    vertices = set(edge.from_ for edge in edges) - set(edge.to for edge in edges)
+    vertices = {
+        vertex 
+        for edge in edges
+        for vertex in (edge.from_, edge.to)
+    }
 
     for vertex in vertices:
         adj[vertex] = [edge.to for edge in edges if edge.from_ == vertex]
