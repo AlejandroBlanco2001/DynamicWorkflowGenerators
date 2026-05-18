@@ -9,7 +9,8 @@ WORKFLOW_STRUCTURE = """
         "step_id": {
             "action": "string",       # Only for action steps
             "type": "action | filter",
-            "inputs": "dict",         # Only for action steps
+            "inputs": "dict",         # Only for action steps. Values can reference upstream step outputs via {"var": "step_id.items"} for arrays.
+                                      # Supports field mapping: {"from": "step_id.items", "map": {"output_field": "input_field", "constant_field": "literal_value"}}
             "filters": [              # Only for action steps
                 {
                     "field": "string",
@@ -17,6 +18,7 @@ WORKFLOW_STRUCTURE = """
                     "value": "string"
                 }
             ],
+            "filter_combine": "and | or",  # Optional. How to combine multiple filters. Default: "and"
             "depends_on": ["step_id"],  # Optional. Step is skipped if any dependency produced no items.
 
             "condition": {            # Only for filter steps, follows json-logic syntax.
@@ -71,6 +73,8 @@ Your responsibility is to create a workflow for a user request using the provide
 ### Action Steps (`type: "action"`)
 - MUST have `"action"` set to a valid action name from `get_actions_operators`.
 - MAY have `"filters"` to push filtering to the database (only for queryable fields).
+- MAY have `"filter_combine"` — "and" (default) or "or" to combine multiple filters.
+- MAY have `"inputs"` with direct variable references or field mapping.
 - MAY have `"depends_on"` — list of step IDs that must produce items for this step to run.
 - MUST NOT have `"condition"`.
 
@@ -119,6 +123,29 @@ Each entry in the `filters` array:
     "operator": "string", // must be a valid operator from get_actions_operators
     "value": "string"
 }
+
+## Field Mapping in Inputs (action steps only)
+Transform upstream step outputs when passing to actions using `"from"` and `"map"`:
+{
+    "from": "step_id.items",  // source array from upstream step
+    "map": {
+        "output_field": "input_field",    // rename: map input_field from source to output_field in result
+        "constant_field": "literal_value" // constant: add constant_field with literal_value
+    }
+}
+
+Example — map projects to invoices with amount and status:
+```json
+{
+    "from": "step_2.items",
+    "map": {
+        "project_id": "id",      // rename: source.id → result.project_id
+        "amount": 100,            // constant: add amount: 100 to each item
+        "status": "overdue"       // constant: add status: "overdue" to each item
+    }
+}
+```
+Result: Each item in step_2.items becomes `{project_id: item.id, amount: 100, status: "overdue"}`.
 
 ## Edges
 - Every step MUST appear in `edges`.
@@ -197,6 +224,75 @@ User: "Get active projects and their clients, but only if there are active proje
     "permissions": {}
 }
 
+### Example 4: Using model_to_prompt to create data
+User: "Create an invoice for project 1"
+{
+    "version": "1.0.0",
+    "metadata": {},
+    "variables": {},
+    "vertices": {
+        "step_1": {
+            "action": "model_to_prompt",
+            "type": "action"
+        },
+        "step_2": {
+            "action": "create_invoice",
+            "type": "action",
+            "depends_on": ["step_1"]
+        }
+    },
+    "edges": [
+        {"from_": "step_1", "to": "step_2"},
+        {"from_": "step_2", "to": "END"}
+    ],
+    "timeouts": {},
+    "permissions": {}
+}
+
+### Example 5: Bulk operation with field mapping
+User: "Create invoices for all finished projects with amount 100 and status overdue"
+{
+    "version": "1.0.0",
+    "metadata": {},
+    "variables": {},
+    "vertices": {
+        "step_1": {
+            "action": "get_projects",
+            "type": "action",
+            "filters": [{"field": "status", "operator": "eq", "value": "finished"}]
+        },
+        "step_2": {
+            "action": "create_invoices",
+            "type": "action",
+            "depends_on": ["step_1"],
+            "inputs": {
+                "invoices": {
+                    "from": "step_1.items",
+                    "map": {
+                        "project_id": "id",
+                        "amount": 100,
+                        "status": "overdue"
+                    }
+                }
+            }
+        }
+    },
+    "edges": [
+        {"from_": "step_1", "to": "step_2"},
+        {"from_": "step_2", "to": "END"}
+    ],
+    "timeouts": {},
+    "permissions": {}
+}
+
+## Available Actions
+
+The executor can perform these actions:
+- `get_clients`: Fetch clients from database with optional filtering (queryable fields: email, name)
+- `get_projects`: Fetch projects from database with optional filtering (queryable fields: name, status)
+- `create_invoice`: Create invoice for a project
+- `model_to_prompt`: Get schema description of SQLModel (use when creating instances)
+
 ## Tools
 You have access to the following tool:
 - `get_actions_operators`
@@ -234,8 +330,8 @@ Review the JSON workflow object and verify it passes every rule in the rubric be
 
 ### Filter Steps (`type: "filter"`)
 - [ ] MUST have `"condition"` using valid json-logic syntax.
-- [ ] Condition MUST reference upstream step outputs via `{"var": "step_id.items"}` — NOT bare field names at the top level.
-- [ ] MUST use json-logic's `"filter"` operator to filter arrays: `{"filter": [{"var": "step_id.items"}, <predicate>]}`.
+- [ ] Condition MUST reference upstream step outputs via `{{"var": "step_id.items"}}` — NOT bare field names at the top level.
+- [ ] MUST use json-logic's `"filter"` operator to filter arrays: `{{"filter": [{{"var": "step_id.items"}}, <predicate>]}}`.
 - [ ] MAY have `"depends_on"` — each listed step ID MUST exist in `vertices`.
 - [ ] MUST NOT have `"action"`, `"inputs"`, `"filters"`, or `"items_path"`.
 
@@ -302,7 +398,7 @@ Action step MUST have: `action`, `type: "action"`.
 Action step MAY have: `filters` (queryable fields only), `inputs`, `timeouts`, `depends_on`.
 Action step MUST NOT have: `items_path`, `condition`.
 
-Filter step MUST have: `type: "filter"`, `condition` (json-logic using `{"filter": [{"var": "step_id.items"}, <predicate>]}`).
+Filter step MUST have: `type: "filter"`, `condition` (json-logic using `{{"filter": [{{"var": "step_id.items"}}, <predicate>]}}`).
 Filter step MAY have: `depends_on`.
 Filter step MUST NOT have: `action`, `inputs`, `filters`, `items_path`.
 
