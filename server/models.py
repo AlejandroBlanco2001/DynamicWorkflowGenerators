@@ -12,6 +12,12 @@ class ProjectStatus(str, Enum):
     FINISHED = "finished"
     REJECTED = "rejected"
 
+class InvoiceStatus(str, Enum):
+    PENDING = "pending"
+    DUE = "due"
+    PAID = "paid"
+    OVERDUE = "overdue"
+    CANCELLED = "cancelled"
 
 class Clients(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -26,6 +32,21 @@ class Projects(SQLModel, table=True):
     status: ProjectStatus = Field(default=ProjectStatus.NEGOTIATION)
     client_id: int = Field(foreign_key="clients.id")
     client: Clients = Relationship(back_populates="projects")
+
+
+class Invoices(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="projects.id")
+    project: Projects = Relationship(back_populates="invoices")
+    amount: float = Field(default=0.0)
+    status: InvoiceStatus = Field(default=InvoiceStatus.PENDING)
+
+
+class Payments(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    invoice_id: int = Field(foreign_key="invoices.id")
+    invoice: Invoices = Relationship(back_populates="payments")
+    amount: float = Field(default=0.0)
 
 
 sqlite_file_name = "database.db"
@@ -67,6 +88,8 @@ def seed_database(session: Session):
     ]
 
     session.add_all(projects)
+    session.flush()
+
     session.commit()
 
 

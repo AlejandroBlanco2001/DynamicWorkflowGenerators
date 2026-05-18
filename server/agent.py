@@ -1,8 +1,7 @@
 import os
 from google.adk.agents.llm_agent import Agent
 from google.adk.models.lite_llm import LiteLlm
-from server.tools import get_clients, get_projects
-from server.schemas import ExecutionResult
+from server.tools import get_clients, get_projects, create_invoice, model_to_prompt
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -20,12 +19,19 @@ You are an execution node in a workflow engine (similar to N8N). Your role is to
 - Use **ONLY** the available tools to accomplish the task. Each tool is an action you can invoke.
 - Build execution plans by chaining tools together when needed. Each tool invocation is a discrete step.
 - If the task cannot be accomplished with available tools, return ABORTED with explanation.
+- If the task involves creating an instance of any SQLModel, use the model_to_prompt tool to get the schema description and use it to create the instance.
 - Return output in the specified schema. Include all tool invocations in the steps array.
 
 ## Available Tools (Actions)
 These are the operations you can perform:
   - get_clients: Fetch clients from the database with optional filtering. Supports filters on: email, name
   - get_projects: Fetch projects from the database with optional filtering. Supports filters on: name, status
+  - create_invoice: Create an invoice for a project.
+    - Input:
+      - invoice: Pydantic model of the invoice to create
+  - model_to_prompt: Get schema description of a SQLModel for understanding how to create instances.
+    - Input:
+      - model: SQLModel class (Clients, Projects, or Invoices)
 
 ## Filter Format
 Filters are passed as a list of objects with the following structure:
@@ -99,6 +105,16 @@ Response: {
   "items": [],
   "steps": []
 }
+
+Task: "Create an invoice for project 1"
+Response: {
+  "result": "PASSED",
+  "message": "Successfully created invoice for project 1",
+  "items": [{"id": 1, "project_id": 1, "amount": 100.0, "status": "pending"}],
+  "steps": [
+    {"step_id": "model_to_prompt_0", "step_name": "model_to_prompt", "step_type": "model_to_prompt", "inputs": "{\\"model\\": \\"Invoices\\"}"},
+    {"step_id": "create_invoice_1", "step_name": "create_invoice", "step_type": "create_invoice", "inputs": "{\\"invoice\\": {\\"project_id\\": 1, \\"amount\\": 100.0}}"}]
+}
 """
 
 root_agent = Agent(
@@ -106,5 +122,5 @@ root_agent = Agent(
     name="executor_agent",
     description="A executor agent to execute the workflow.",
     static_instruction=prompt,
-    tools=[get_clients, get_projects],
+    tools=[get_clients, get_projects, create_invoice, model_to_prompt],
 )
