@@ -5,11 +5,24 @@ from server.json_logic import jsonLogic
 import logging
 from server.graph import build_adjacency_list, topological_sort
 from server.schemas import Step, WorkflowDefinition, State
-from server.tools import apply_field_mapping
 
 logging.basicConfig(level=logging.INFO)
 
 StepHandler = Callable[[Step, State], Coroutine[Any, Any, dict[str, Any]]]
+
+
+def apply_field_mapping(items: list[dict], mapping: dict[str, Any]) -> list[dict]:
+    """Apply field mapping to transform items. Moved here to avoid Temporal sandbox restrictions."""
+    result = []
+    for item in items:
+        transformed = {}
+        for output_field, source_or_value in mapping.items():
+            if isinstance(source_or_value, str) and source_or_value in item:
+                transformed[output_field] = item[source_or_value]
+            else:
+                transformed[output_field] = source_or_value
+        result.append(transformed)
+    return result
 
 
 async def execute_action(step: Step, state: State) -> dict[str, Any]:
@@ -42,12 +55,16 @@ async def execute_action(step: Step, state: State) -> dict[str, Any]:
             else:
                 processed_inputs[key] = value
         inputs = processed_inputs
+        workflow.logger.info(f"Inputs: {inputs}, step: {step}")
+        # TODO: Code smell, move to the filters, and filters is now a dict with filters and their logic to combine
+        if step.filter_combine:
+            inputs["filter_combine"] = step.filter_combine
 
     timeout = timedelta(seconds=60) if step.action == "agentic_node" else timedelta(seconds=10)
 
     result = await workflow.execute_activity(
         step.action,
-        args=[inputs, step.filters, state],
+        args=[inputs, step.filters],
         start_to_close_timeout=timeout,
     )
 
@@ -126,6 +143,8 @@ class DynamicWorkflow:
             node = definition.vertices[current_id]
             node.id = current_id
             workflow.logger.info(f"Node: {node.inputs}")
+            workflow.logger.info(f"Node filters: {node.filters}")
+            workflow.logger.info(f"Node filter_combine: {node.filter_combine}")
             result = await execute_step(node, state)
             state.node_outputs[node.id] = result
             workflow.logger.info(f"Node outputs: {state.node_outputs}")

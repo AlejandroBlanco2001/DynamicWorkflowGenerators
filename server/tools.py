@@ -7,6 +7,9 @@ from sqlmodel import SQLModel, select, Session
 from server.models import Projects, Clients, engine, Invoices
 from typing import Literal, Callable, Any, Optional, get_origin, get_args
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def apply_field_mapping(items: list[dict], mapping: dict[str, Any]) -> list[dict]:
     """Apply field mapping to transform items.
@@ -122,6 +125,7 @@ async def get_projects(filters: Optional[list[dict]] = None, filter_combine: str
         else:
             statement = statement.limit(10)
 
+        logger.info(f"Statement: {statement}")
         projects = session.exec(statement).all()
 
     return [project.model_dump() for project in projects]

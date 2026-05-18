@@ -16,6 +16,7 @@ class Step(BaseModel):
     condition: dict[str, Any] | None = None
     items_path: str | None = None
     filters: list[Filter] | None = None
+    filter_combine: Literal["and", "or"] | None = None
 
 class FilterStep(Step):
     type: Literal["filter"]

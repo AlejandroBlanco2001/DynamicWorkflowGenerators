@@ -125,7 +125,6 @@ async def get_projects(
 async def create_invoices(
     input: dict[str, Any],
     filters: list[Filter] | None = None,
-    state: State,
 ) -> dict[str, Any]:
     raw_invoices = input.get("invoices", None)
 

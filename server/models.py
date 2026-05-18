@@ -32,6 +32,7 @@ class Projects(SQLModel, table=True):
     status: ProjectStatus = Field(default=ProjectStatus.NEGOTIATION)
     client_id: int = Field(foreign_key="clients.id")
     client: Clients = Relationship(back_populates="projects")
+    invoices: list["Invoices"] = Relationship(back_populates="project")
 
 
 class Invoices(SQLModel, table=True):
@@ -40,6 +41,8 @@ class Invoices(SQLModel, table=True):
     project: Projects = Relationship(back_populates="invoices")
     amount: float = Field(default=0.0)
     status: InvoiceStatus = Field(default=InvoiceStatus.PENDING)
+    payments: list["Payments"] = Relationship(back_populates="invoice")
+
 
 
 class Payments(SQLModel, table=True):
@@ -52,7 +55,7 @@ class Payments(SQLModel, table=True):
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 
-engine = create_engine(sqlite_url)
+engine = create_engine(sqlite_url, echo=True)
 
 
 def get_session():
