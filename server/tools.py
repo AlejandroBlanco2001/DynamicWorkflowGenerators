@@ -165,15 +165,10 @@ async def create_invoice(invoices: list[Invoices]) -> list[Invoices]:
         Invoice object.
     """
     with Session(engine) as session:
-        results = [
-            Invoices(project_id=invoice.project_id, amount=invoice.amount, status=invoice.status)
-            for invoice in invoices
-        ]
-        session.add_all(results)
+        session.add_all(invoices)
         session.commit()
-        session.refresh(results)
 
-        return results
+    return [invoice for invoice in invoices]
 
 
 def _type_to_string(tp):

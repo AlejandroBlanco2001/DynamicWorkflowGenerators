@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, Depends
-from server.models import Clients, Projects, seed_database, create_db_and_tables, SessionDep
+from server.models import Clients, Projects, seed_database, create_db_and_tables, SessionDep, Invoices
 from sqlmodel import select
 import uvicorn
 from server.workflow import DynamicWorkflow
@@ -49,12 +49,18 @@ def get_projects(session: SessionDep):
     result = session.exec(statement)
     return result.all()
 
+@app.get("/invoices")
+def get_invoices(session: SessionDep):
+    statement = select(Invoices)
+    result = session.exec(statement)
+    return result.all()
+
 @app.get("/actions")
 def list_actions():
     # TODO: Make the operators a list, so we can just return it without hardcoding the operators
     return {
         "actions": [{"name": name, **meta} for name, meta in ACTION_METADATA.items()],
-        "operators": ["eq", "neq", "gt", "gte", "lt", "lte", "contains"],
+        "operators": ["eq", "neq", "gt", "gte", "lt", "lte", "contains", "not_contains"],
     }
 
 @app.post("/workflow")

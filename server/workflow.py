@@ -42,16 +42,13 @@ async def execute_action(step: Step, state: State) -> dict[str, Any]:
                 from_ref = value["from"]  # e.g., "step_2.items"
                 map_config = value["map"]
 
-                if from_ref not in state.node_outputs:
+                node_id, items_path = from_ref.split(".")
+                if node_id not in state.node_outputs:
                     raise ValueError(f"Reference '{from_ref}' not found in outputs")
-
-                source_items = state.node_outputs[from_ref].get("items", [])
+                source_items = state.node_outputs[node_id].get(items_path, [])
                 if not isinstance(source_items, list):
                     raise ValueError(f"'{from_ref}' is not an array")
-
-                # Apply field mapping
-                transformed = apply_field_mapping(source_items, map_config)
-                processed_inputs[key] = transformed
+                processed_inputs[key] = apply_field_mapping(source_items, map_config)
             else:
                 processed_inputs[key] = value
         inputs = processed_inputs
