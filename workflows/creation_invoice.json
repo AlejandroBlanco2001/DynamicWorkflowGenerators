@@ -1,0 +1,120 @@
+{
+    "version": "1.0.0",
+    "metadata": {},
+    "variables": {},
+    "vertices": {
+        "step_1": {
+            "action": "get_projects",
+            "type": "action",
+            "filters": [
+                {
+                    "field": "status",
+                    "operator": "eq",
+                    "value": "finished"
+                },
+                {
+                    "field": "status",
+                    "operator": "eq",
+                    "value": "development"
+                }
+            ],
+            "filter_combine": "or"
+        },
+        "step_2": {
+            "type": "filter",
+            "depends_on": ["step_1"],
+            "condition": {
+                "filter": [
+                    {
+                        "var": "step_1.items"
+                    },
+                    {
+                        "==": [
+                            {
+                                "var": "status"
+                            },
+                            "finished"
+                        ]
+                    }
+                ]
+            }
+        },
+        "step_3": {
+            "action": "create_invoices",
+            "type": "action",
+            "depends_on": ["step_2"],
+            "inputs": {
+                "invoices": {
+                    "from": "step_2.items",
+                    "map": {
+                        "project_id": "id",
+                        "amount": 100,
+                        "status": "overdue"
+                    }
+                }
+            }
+        },
+        "step_4": {
+            "type": "filter",
+            "depends_on": ["step_1"],
+            "condition": {
+                "filter": [
+                    {
+                        "var": "step_1.items"
+                    },
+                    {
+                        "==": [
+                            {
+                                "var": "status"
+                            },
+                            "development"
+                        ]
+                    }
+                ]
+            }
+        },
+        "step_5": {
+            "action": "create_invoices",
+            "type": "action",
+            "depends_on": ["step_4"],
+            "inputs": {
+                "invoices": {
+                    "from": "step_4.items",
+                    "map": {
+                        "project_id": "id",
+                        "amount": 50,
+                        "status": "due"
+                    }
+                }
+            }
+        }
+    },
+    "edges": [
+        {
+            "from_": "step_1",
+            "to": "step_2"
+        },
+        {
+            "from_": "step_1",
+            "to": "step_4"
+        },
+        {
+            "from_": "step_2",
+            "to": "step_3"
+        },
+        {
+            "from_": "step_4",
+            "to": "step_5"
+        },
+        {
+            "from_": "step_3",
+            "to": "END"
+        },
+        {
+            "from_": "step_5",
+            "to": "END"
+        }
+    ],
+    "timeouts": {},
+    "permissions": {}
+}

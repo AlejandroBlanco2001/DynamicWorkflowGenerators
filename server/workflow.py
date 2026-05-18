@@ -5,6 +5,7 @@ from server.json_logic import jsonLogic
 import logging
 from server.graph import build_adjacency_list, topological_sort
 from server.schemas import Step, WorkflowDefinition, State
+from server.tools import apply_field_mapping
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,11 +19,35 @@ async def execute_action(step: Step, state: State) -> dict[str, Any]:
     if step.id is None:
         raise ValueError("Action step ID is required")
 
+    # Process field mapping in inputs
+    inputs = step.inputs or {}
+    if isinstance(inputs, dict):
+        processed_inputs = {}
+        for key, value in inputs.items():
+            if isinstance(value, dict) and "from" in value and "map" in value:
+                # Resolve "from" reference to get source items
+                from_ref = value["from"]  # e.g., "step_2.items"
+                map_config = value["map"]
+
+                if from_ref not in state.node_outputs:
+                    raise ValueError(f"Reference '{from_ref}' not found in outputs")
+
+                source_items = state.node_outputs[from_ref].get("items", [])
+                if not isinstance(source_items, list):
+                    raise ValueError(f"'{from_ref}' is not an array")
+
+                # Apply field mapping
+                transformed = apply_field_mapping(source_items, map_config)
+                processed_inputs[key] = transformed
+            else:
+                processed_inputs[key] = value
+        inputs = processed_inputs
+
     timeout = timedelta(seconds=60) if step.action == "agentic_node" else timedelta(seconds=10)
 
     result = await workflow.execute_activity(
         step.action,
-        args=[step.inputs, step.filters],
+        args=[inputs, step.filters, state],
         start_to_close_timeout=timeout,
     )
 
