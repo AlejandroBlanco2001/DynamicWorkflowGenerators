@@ -1,10 +1,16 @@
+import os
 from google.adk.agents.llm_agent import Agent
 from google.adk.models.lite_llm import LiteLlm
 from server.tools import get_clients, get_projects
 from server.schemas import ExecutionResult
+import logging
+
+logging.basicConfig(level=logging.INFO)
+LOG = logging.getLogger(__name__)
 
 model = LiteLlm(
     model="openai/gpt-4o",
+    api_key=os.getenv("OPENAI_API_KEY"),
 )
 
 prompt = """
@@ -21,8 +27,23 @@ These are the operations you can perform:
   - get_clients: Fetch clients from the database with optional filtering. Supports filters on: email, name
   - get_projects: Fetch projects from the database with optional filtering. Supports filters on: name, status
 
+## Filter Format
+Filters are passed as a list of objects with the following structure:
+```json
+[
+  {
+    "field": "field_name",
+    "operator": "eq|neq|gt|gte|lt|lte|contains|not_contains",
+    "value": "comparison_value"
+  }
+]
+```
+- **field**: The field to filter on (must be queryable for the entity type)
+- **operator**: Comparison operator (eq=equal, neq=not equal, gt=greater than, gte=greater or equal, lt=less than, lte=less or equal, contains=value in field, not_contains=value not in field)
+- **value**: The value to compare against
+
 ## Output Schema
-Return a JSON object with:
+Return ONLY raw JSON (no markdown formatting) with:
   - result: PASSED (task completed) | FAILED (executed but task not satisfied) | ABORTED (cannot execute)
   - message: Clear explanation of outcome and any relevant details
   - items: Array of results/data retrieved or processed
@@ -84,7 +105,6 @@ root_agent = Agent(
     model=model,
     name="executor_agent",
     description="A executor agent to execute the workflow.",
-    instruction="You are a executor agent to execute the workflow.",
+    static_instruction=prompt,
     tools=[get_clients, get_projects],
-    output_schema=ExecutionResult,
 )

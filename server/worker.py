@@ -3,7 +3,7 @@ import asyncio
 from temporalio.client import Client
 from temporalio.worker import Worker
 from server.workflow import DynamicWorkflow
-from server.actions import get_clients, get_projects
+from server.actions import get_clients, get_projects, agentic_node
 
 async def main():
     temporal_address = os.getenv("TEMPORAL_ADDRESS", "localhost:7233")
@@ -13,7 +13,7 @@ async def main():
         client,
         task_queue="workflow",
         workflows=[DynamicWorkflow],
-        activities=[get_clients, get_projects],
+        activities=[get_clients, get_projects, agentic_node],
     )
 
     await worker.run()

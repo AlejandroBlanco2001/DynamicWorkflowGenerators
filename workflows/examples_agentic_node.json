@@ -1,0 +1,31 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "name": "Agentic Node Example Workflow",
+    "description": "Example workflow demonstrating agentic_node usage for agent-driven task execution"
+  },
+  "variables": {},
+  "vertices": {
+    "find_clients": {
+      "id": "find_clients",
+      "type": "action",
+      "action": "agentic_node",
+      "inputs": {
+        "content": "Find all clients with email addresses containing 'example.com'"
+      }
+    },
+    "END": {
+      "id": "END",
+      "type": "filter",
+      "condition": {}
+    }
+  },
+  "edges": [
+    {
+      "from_": "find_clients",
+      "to": "END"
+    }
+  ],
+  "timeouts": {},
+  "permissions": {}
+}

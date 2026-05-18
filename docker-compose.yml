@@ -25,6 +25,7 @@ services:
     environment:
       - TEMPORAL_ADDRESS=${TEMPORAL_ADDRESS:-temporal:7233}
       - API_PORT=${API_PORT:-3000}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
 
   worker:
     build:
@@ -35,6 +36,7 @@ services:
         condition: service_healthy
     environment:
       - TEMPORAL_ADDRESS=${TEMPORAL_ADDRESS:-temporal:7233}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
 
   temporal:
     image: temporalio/temporal:latest

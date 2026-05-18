@@ -18,10 +18,12 @@ async def execute_action(step: Step, state: State) -> dict[str, Any]:
     if step.id is None:
         raise ValueError("Action step ID is required")
 
+    timeout = timedelta(seconds=60) if step.action == "agentic_node" else timedelta(seconds=10)
+
     result = await workflow.execute_activity(
         step.action,
         args=[step.inputs, step.filters],
-        start_to_close_timeout=timedelta(seconds=10),
+        start_to_close_timeout=timeout,
     )
 
     return result
@@ -95,9 +97,10 @@ class DynamicWorkflow:
             # TODO: Think a way to have a single node without the need to have a END node
             if current_id == "END":
                 continue
-
+            
             node = definition.vertices[current_id]
             node.id = current_id
+            workflow.logger.info(f"Node: {node.inputs}")
             result = await execute_step(node, state)
             state.node_outputs[node.id] = result
             workflow.logger.info(f"Node outputs: {state.node_outputs}")

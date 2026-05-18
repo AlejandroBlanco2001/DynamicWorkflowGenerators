@@ -1,9 +1,7 @@
 from pydantic import BaseModel
 from typing import Any, Literal
-from dataclasses import dataclass
 
-@dataclass
-class Filter:
+class Filter(BaseModel):
     field: str
     operator: Literal["eq", "neq", "gt", "gte", "lt", "lte", "contains"]
     value: Any
@@ -54,5 +52,5 @@ class StepsExecuted(BaseModel):
 class ExecutionResult(BaseModel):
     result: Literal["PASSED", "FAILED", "ABORTED"]
     message: str
-    items: list[Any]
+    items: list[dict]
     steps: list[StepsExecuted]
